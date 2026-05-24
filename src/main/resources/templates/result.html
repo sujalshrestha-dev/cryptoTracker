@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Crypto Prices</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['Outfit', 'sans-serif'],
+                        mono:    ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        crypto: {
+                            bg:     '#0b0f19',
+                            card:   '#111827',
+                            border: '#1f2937',
+                            accent: '#f59e0b',
+                            green:  '#10b981',
+                            red:    '#f87171',
+                            muted:  '#6b7280',
+                            text:   '#f9fafb',
+                        }
+                    },
+                    animation: {
+                        'pulse-dot': 'pulseDot 1.6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        pulseDot: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%':      { opacity: '0.2' },
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0b0f19;
+            background-image:
+                radial-gradient(ellipse 60% 40% at 70% 0%,  rgba(245,158,11,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 50% at 10% 80%, rgba(16,185,129,0.06) 0%, transparent 60%);
+        }
+        .grid-bg {
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        tbody tr {
+            animation: fadeUp 0.35s ease forwards;
+            opacity: 0;
+        }
+        tbody tr:nth-child(1)  { animation-delay: 0.04s; }
+        tbody tr:nth-child(2)  { animation-delay: 0.08s; }
+        tbody tr:nth-child(3)  { animation-delay: 0.12s; }
+        tbody tr:nth-child(4)  { animation-delay: 0.16s; }
+        tbody tr:nth-child(5)  { animation-delay: 0.20s; }
+        tbody tr:nth-child(6)  { animation-delay: 0.24s; }
+        tbody tr:nth-child(7)  { animation-delay: 0.28s; }
+        tbody tr:nth-child(8)  { animation-delay: 0.32s; }
+        tbody tr:nth-child(9)  { animation-delay: 0.36s; }
+        tbody tr:nth-child(10) { animation-delay: 0.40s; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        tbody tr:hover { background-color: rgba(245,158,11,0.04); }
+        .positive { color: #10b981; }
+        .negative { color: #f87171; }
+    </style>
+</head>
+<body class="grid-bg min-h-screen font-display text-crypto-text px-4 py-12">
+
+<div class="max-w-3xl mx-auto">
+
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center gap-2 mb-4">
+            <span class="flex items-center gap-2 text-xs font-mono text-crypto-green bg-emerald-950/60 border border-emerald-800/50 rounded-full px-3 py-1 tracking-widest uppercase">
+                <span class="w-1.5 h-1.5 rounded-full bg-crypto-green animate-pulse-dot"></span>
+                Live Prices
+            </span>
+        </div>
+        <h1 class="text-5xl font-extrabold tracking-tight leading-none">
+            Crypto<br>
+            <span class="text-crypto-accent">Market</span> Overview
+        </h1>
+        <p class="text-crypto-muted text-sm font-mono mt-3">
+            Real-time prices &middot; Updated every 30s
+        </p>
+    </div>
+
+    <!-- Summary stat cards -->
+    <div class="grid grid-cols-3 gap-3 mb-8">
+        <div class="bg-crypto-card border border-crypto-border rounded-xl p-4">
+            <p class="text-xs font-mono text-crypto-muted uppercase tracking-widest mb-1">Tracking</p>
+            <p class="text-2xl font-bold text-crypto-text" id="coin-count">—</p>
+        </div>
+        <div class="bg-crypto-card border border-crypto-border rounded-xl p-4">
+            <p class="text-xs font-mono text-crypto-muted uppercase tracking-widest mb-1">Gainers</p>
+            <p class="text-2xl font-bold text-crypto-green" id="gainers-count">—</p>
+        </div>
+        <div class="bg-crypto-card border border-crypto-border rounded-xl p-4">
+            <p class="text-xs font-mono text-crypto-muted uppercase tracking-widest mb-1">Losers</p>
+            <p class="text-2xl font-bold text-crypto-red" id="losers-count">—</p>
+        </div>
+    </div>
+
+    <!-- Empty state -->
+    <div th:if="${coins == null or coins.isEmpty()}"
+         class="bg-crypto-card border border-crypto-border rounded-2xl p-12 text-center">
+        <i class="ti ti-mood-empty text-4xl text-crypto-muted mb-3 block"></i>
+        <p class="text-crypto-muted font-mono text-sm">No coins found. Check the coin names and try again.</p>
+        <a th:href="@{/}" class="inline-flex items-center gap-1 mt-4 text-xs font-mono text-crypto-accent hover:underline">
+            <i class="ti ti-arrow-left text-sm"></i> Go back
+        </a>
+    </div>
+
+    <!-- Table card -->
+    <div th:if="${coins != null and !coins.isEmpty()}"
+         class="bg-crypto-card border border-crypto-border rounded-2xl overflow-hidden">
+
+        <!-- Toolbar -->
+        <div class="flex items-center justify-between px-5 py-4 border-b border-crypto-border">
+            <span class="text-sm font-semibold text-crypto-text tracking-wide">Assets</span>
+            <span class="text-xs font-mono text-crypto-muted flex items-center gap-1.5">
+                <i class="ti ti-refresh text-sm"></i>
+                Auto-refresh on
+            </span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                <tr class="border-b border-crypto-border">
+                    <th class="text-left px-5 py-3 text-xs font-mono text-crypto-muted uppercase tracking-widest">#</th>
+                    <th class="text-left px-5 py-3 text-xs font-mono text-crypto-muted uppercase tracking-widest">Coin</th>
+                    <th class="text-right px-5 py-3 text-xs font-mono text-crypto-muted uppercase tracking-widest">Price (USD)</th>
+                    <th class="text-right px-5 py-3 text-xs font-mono text-crypto-muted uppercase tracking-widest">24h Change</th>
+                    <th class="text-right px-5 py-3 text-xs font-mono text-crypto-muted uppercase tracking-widest hidden sm:table-cell">Trend</th>
+                </tr>
+                </thead>
+                <tbody id="coin-tbody">
+                <tr th:each="coin, stat : ${coins}"
+                    class="border-b border-crypto-border/50 transition-colors duration-150 cursor-default">
+
+                    <!-- Row number -->
+                    <td class="px-5 py-4 text-crypto-muted font-mono text-xs"
+                        th:text="${stat.count}">1</td>
+
+                    <!-- Coin name -->
+                    <td class="px-5 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-amber-950/60 border border-amber-800/30 flex items-center justify-center flex-shrink-0">
+                                <i class="ti ti-currency-bitcoin text-crypto-accent text-sm"></i>
+                            </div>
+                            <!-- Uses getDisplayName() → "Bitcoin" instead of "bitcoin" -->
+                            <span class="font-semibold text-crypto-text"
+                                  th:text="${coin.name}">Bitcoin</span>
+                        </div>
+                    </td>
+
+                    <!-- Price — uses getFormattedPrice() → "$67,230.50" -->
+                    <td class="px-5 py-4 text-right font-mono text-crypto-text"
+                        th:text="${'$' + coin.formattedPrice}">$67,230.00</td>
+
+                    <!-- 24h Change — uses getRoundedChange() → "2.35%" -->
+                    <td class="px-5 py-4 text-right">
+                            <span class="inline-flex items-center justify-end gap-1 font-mono font-medium"
+                                  th:classappend="${coin.positiveChange} ? 'positive' : 'negative'">
+                                <i th:class="${coin.positiveChange} ? 'ti ti-trending-up' : 'ti ti-trending-down'"
+                                   class="text-sm"></i>
+                                <!-- data-val stores the raw number for JS to read — avoids icon character contamination -->
+                                <span class="change-val"
+                                      th:data-val="${coin.roundedChange}"
+                                      th:text="${coin.roundedChange + '%'}">2.35%</span>
+                            </span>
+                    </td>
+
+                    <!-- Sparkline bars -->
+                    <td class="px-5 py-4 hidden sm:table-cell">
+                        <div class="flex items-end gap-0.5 justify-end h-6">
+                            <div th:class="${coin.positiveChange} ? 'bg-crypto-green/60' : 'bg-crypto-red/60'"
+                                 class="w-1 rounded-sm" style="height:40%"></div>
+                            <div th:class="${coin.positiveChange} ? 'bg-crypto-green/70' : 'bg-crypto-red/70'"
+                                 class="w-1 rounded-sm" style="height:65%"></div>
+                            <div th:class="${coin.positiveChange} ? 'bg-crypto-green/80' : 'bg-crypto-red/80'"
+                                 class="w-1 rounded-sm" style="height:50%"></div>
+                            <div th:class="${coin.positiveChange} ? 'bg-crypto-green' : 'bg-crypto-red'"
+                                 class="w-1 rounded-sm" style="height:100%"></div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-5 py-3 border-t border-crypto-border flex items-center justify-between">
+            <span class="text-xs font-mono text-crypto-muted">Powered by CoinGecko API</span>
+            <a th:href="@{/}" class="text-xs font-mono text-crypto-accent hover:underline flex items-center gap-1">
+                <i class="ti ti-arrow-left text-sm"></i> Track more coins
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Read data-val attribute instead of textContent to avoid icon character contamination
+    const rows = document.querySelectorAll('#coin-tbody tr');
+    let gainers = 0, losers = 0;
+    rows.forEach(row => {
+        const span = row.querySelector('.change-val');
+        if (!span) return;
+        const val = parseFloat(span.dataset.val);
+        if (!isNaN(val)) {
+            if (val >= 0) gainers++; else losers++;
+        }
+    });
+    document.getElementById('coin-count').textContent    = rows.length;
+    document.getElementById('gainers-count').textContent = gainers;
+    document.getElementById('losers-count').textContent  = losers;
+</script>
+
+</body>
+</html>
