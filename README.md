@@ -5,7 +5,7 @@ A real-time cryptocurrency price tracker built with Spring Boot and Thymeleaf, p
 ## Screenshots
 
 ![Home Page](Screenshots/home.png)
-![Results Page](Screenshots/result.png)
+![Results Page](Screenshots/Result.png)
 
 ## Features
 
