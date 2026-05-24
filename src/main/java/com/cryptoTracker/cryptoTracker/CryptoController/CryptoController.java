@@ -26,7 +26,9 @@ public class CryptoController {
 
     @PostMapping("/track")
     public String track(@RequestParam String coins, Model model){
-        List<String> coinList = Arrays.asList(coins.split(","));
+        List<String> coinList = Arrays.stream(coins.split(","))
+                .map(String::trim)
+                .collect(java.util.stream.Collectors.toList());
         List<CryptoCoin> result = cryptoService.getCryptoPrices(coinList);
         model.addAttribute("coins", result);
         return "result";

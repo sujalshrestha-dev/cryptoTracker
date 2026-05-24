@@ -10,21 +10,26 @@ import java.util.List;
 
 @Service
 public class CryptoService {
-    private final String API_URL="https://api.coingecko.com/api/v3/simple/price?ids=%s&vs_currencies=usd&include_24hr_change=true";
+    private final String API_URL = "https://api.coingecko.com/api/v3/simple/price?ids=%s&vs_currencies=usd&include_24hr_change=true";
 
-    public List<CryptoCoin> getCryptoPrices(List<String> coins ){
+    public List<CryptoCoin> getCryptoPrices(List<String> coins) {
         List<CryptoCoin> coinList = new ArrayList<>();
         String ids = String.join(",", coins);
-
         String url = String.format(API_URL, ids);
 
         RestTemplate restTemplate = new RestTemplate();
-        String response  = restTemplate.getForObject(url, String.class);
+        String response = restTemplate.getForObject(url, String.class);
+
+        // FIX 1: null check
+        if (response == null || response.isEmpty()) return coinList;
 
         JSONObject json = new JSONObject(response);
 
-        for(String coin: coins){
-            if(json.has(coin)){
+        // FIX 2: check the API didn't return an error object
+        if (!json.has(coins.get(0))) return coinList;
+
+        for (String coin : coins) {
+            if (json.has(coin)) {
                 JSONObject coinJson = json.getJSONObject(coin);
                 double price = coinJson.getDouble("usd");
                 double change24hr = coinJson.getDouble("usd_24h_change");
